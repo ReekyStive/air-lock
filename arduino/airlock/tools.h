@@ -1,3 +1,53 @@
+#ifndef __TOOLS_H__
+#define __TOOLS_H__
+
+int __debug_mode__ = 0;
+
+void debugOn()
+{
+    Serial.println("Debug on");
+    __debug_mode__ = 1;
+}
+
+void debugOff()
+{
+    Serial.println("Debug off");
+    __debug_mode__ = 0;
+}
+
+void console(const char *str, int newline = 1)
+{
+    if (__debug_mode__)
+    {
+        if (newline)
+            Serial.println(str);
+        else
+            Serial.print(str);
+    }
+}
+
+void console(byte out, int newline = 1)
+{
+    if (__debug_mode__)
+    {
+        if (newline)
+            Serial.println(out);
+        else
+            Serial.print(out);
+    }
+}
+
+void console(int out, int newline = 1)
+{
+    if (__debug_mode__)
+    {
+        if (newline)
+            Serial.println(out);
+        else
+            Serial.print(out);
+    }
+}
+
 void clearSerial()
 {
     while (Serial.available())
@@ -34,3 +84,5 @@ int serialReadInt()
     }
     return res;
 }
+
+#endif

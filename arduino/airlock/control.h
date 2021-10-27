@@ -1,4 +1,5 @@
 #include <Servo.h>
+#include "tools.h"
 
 int servoPin = 6;
 Servo myServo;
@@ -8,68 +9,88 @@ int maxAngle = 120;
 int curAngle = minAngle;
 int defaultDelay = 30;
 
-void setAngle(int tarAngle, int speedDelay)
+void initServo()
+{
+    playMelody(3);
+    myServo.attach(servoPin);
+    delay(100);
+    curAngle = minAngle;
+    myServo.write(minAngle);
+    delay(3000);
+    myServo.detach();
+    delay(100);
+    playMelody(4);
+}
+
+void setAngle(int tarAngle, int servoDelay, int deAtt)
 {
     if (tarAngle < minAngle)
         tarAngle = minAngle;
     if (tarAngle > maxAngle)
         tarAngle = maxAngle;
 
-    if (curAngle == tarAngle)
-        return;
-
-    myServo.attach(servoPin);
+    if (!myServo.attached())
+    {
+        myServo.attach(servoPin);
+        delay(100);
+    }
 
     if (curAngle < tarAngle)
     {
+        console("Setting angle to ", 0);
+        console(tarAngle);
         for (int i = curAngle; i <= tarAngle; i++)
         {
             myServo.write(i);
             curAngle = i;
-            Serial.print("Angle set to ");
-            Serial.println(i);
-            delay(speedDelay);
+            delay(servoDelay);
         }
+        console("Angle set to ", 0);
+        console(tarAngle);
     }
     else // curAngle > tarAngle
     {
+        console("Setting angle to ", 0);
+        console(tarAngle);
         for (int i = curAngle; i >= tarAngle; i--)
         {
             myServo.write(i);
             curAngle = i;
-            Serial.print("Angle set to ");
-            Serial.println(i);
-            delay(speedDelay);
+            delay(servoDelay);
         }
+        console("Angle set to ", 0);
+        console(tarAngle);
     }
 
-    myServo.detach();
-}
+    delay(100);
 
-void initServo()
-{
-    curAngle = minAngle;
-    myServo.attach(servoPin);
-    myServo.write(minAngle);
-    myServo.detach();
+    if (deAtt)
+    {
+        myServo.detach();
+        delay(100);
+    }
 }
 
 void openLock()
 {
-    setAngle(maxAngle, defaultDelay);
+    setAngle(maxAngle, defaultDelay, 0);
 }
 
 void closeLock()
 {
-    setAngle(minAngle, defaultDelay);
+    setAngle(minAngle, defaultDelay, 1);
 }
 
 void oneClickOpen()
 {
-    Serial.println("OneClickOpen");
+    console("OneClickOpen");
     playMelody(0);
+    console("Opening");
     openLock();
+    console("Opened");
     playMelody(1);
     delay(1500);
+    console("Closing");
     closeLock();
+    console("Closed");
 }

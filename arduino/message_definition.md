@@ -16,7 +16,7 @@ FF
 Additional Information
 
 FF
-Verification
+Vertification
 
 EF
 End
@@ -29,7 +29,7 @@ FF
 Response
 
 FF
-Verification
+Vertification
 
 EF
 End

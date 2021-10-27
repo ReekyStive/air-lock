@@ -1,33 +1,31 @@
 #include <SoftwareSerial.h>
 #include "password.h"
+#include "tools.h"
 
 int btTx = 2, btRx = 3;
-SoftwareSerial mySerial(btTx, btRx);
+SoftwareSerial btSerial(btTx, btRx);
 
 int receivedMessageLen = 10;
 int sentMessageLen = 3;
 byte receivedMessage[10];
 byte sentMessage[3];
 
-enum Operation
+enum Status
 {
-    OneClickOpen = 1,
-    SetAngle = 2,
-    PlayMelody = 3,
-    ChangePassword = 4,
+    OneClickOpen = 101,
+    SetAngle = 102,
+    PlayMelody = 103,
+    ChangePassword = 104,
+    Processing = 201,
+    Success = 202,
+    WrongPassword = 203,
+    Invalid = 204,
+    Failed = 205
 };
 
-enum Response
+int verifyMessage()
 {
-    Processing = 11,
-    Success = 12,
-    WrongPassword = 13,
-    Invalid = 14,
-    Failed = 15
-};
-
-int checkMessage()
-{
+    return 1;
     int res = 0;
     for (int i = 0; i < 8; i++)
     {
@@ -39,63 +37,57 @@ int checkMessage()
     return 0;
 }
 
-void translatePasswd(int pos)
+void storePasswd(int offset)
 {
-    // pos == 1: change passwd
-    if (pos == 1)
-        pos = 4;
-    receivedPasswd[0] = receivedMessage[pos + 0] / 16;
-    receivedPasswd[1] = receivedMessage[pos + 0] % 16;
-    receivedPasswd[2] = receivedMessage[pos + 1] / 16;
-    receivedPasswd[3] = receivedMessage[pos + 1] % 16;
-    receivedPasswd[4] = receivedMessage[pos + 2] / 16;
-    receivedPasswd[5] = receivedMessage[pos + 2] % 16;
-
-    Serial.println("Received password:");
-    for (int i = 0; i < 6; i++)
-    {
-        Serial.println(receivedPasswd[i]);
-    }
+    // offset == 0: verify password
+    // offset == 4: change passwd (in params)
+    receivedPasswd[0] = receivedMessage[offset + 0] / 16;
+    receivedPasswd[1] = receivedMessage[offset + 0] % 16;
+    receivedPasswd[2] = receivedMessage[offset + 1] / 16;
+    receivedPasswd[3] = receivedMessage[offset + 1] % 16;
+    receivedPasswd[4] = receivedMessage[offset + 2] / 16;
+    receivedPasswd[5] = receivedMessage[offset + 2] % 16;
 }
 
-void clearMySerial()
+void clearBtSerial()
 {
-    while (mySerial.available())
+    while (btSerial.available())
     {
-        mySerial.read();
+        btSerial.read();
         delay(1);
     }
 }
 
-int getMessage()
+Status getMessage()
 {
     byte cur;
 
     for (int i = 0; i < receivedMessageLen; i++)
     {
-        if (mySerial.available())
+        if (btSerial.available())
         {
-            cur = mySerial.read();
+            cur = btSerial.read();
             receivedMessage[i] = cur;
         }
         else
         {
             return Invalid;
         }
-        delay(5);
+        if (!btSerial.available())
+            delay(10);
     }
-    clearMySerial();
+    clearBtSerial();
 
     if (receivedMessage[9] != 0xEF)
     {
         return Invalid;
     }
-    if (!checkMessage())
+    if (!verifyMessage())
     {
         return Invalid;
     }
 
-    translatePasswd(0);
+    storePasswd(0);
     if (!checkPasswd())
     {
         return WrongPassword;
@@ -136,12 +128,12 @@ void sendMessage(int res)
         sentMessage[0] = 0x05;
     }
 
-    sentMessage[1] = (sentMessage[0] + 1) % 256;
+    sentMessage[1] = (sentMessage[0] + 1) % 256; // verify bit
     sentMessage[2] = 0xEF;
 
     for (int i = 0; i < sentMessageLen; i++)
     {
-        mySerial.write(sentMessage[i]);
+        btSerial.write(sentMessage[i]);
         delay(1);
     }
 }
