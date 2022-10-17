@@ -3,11 +3,13 @@ import asyncio
 import ble
 import threading
 import shared
+from flask_cors import CORS
 
 
 lock = threading.Semaphore()
 ble.BleThread().start()
 app = flask.Flask(__name__)
+CORS(app)
 
 
 @app.get('/ping')
@@ -94,7 +96,7 @@ async def play_melody():
 
 
 @app.get('/change-password')
-def change_passorwd():
+async def change_passorwd():
     args = flask.request.args
     password = args.get('password')
 
@@ -117,7 +119,7 @@ def change_passorwd():
     if not result:
         return {"status": "error", "message": "failed to send command"}
 
-    bt_response = shared.get_data(timeout=5)
+    bt_response = await shared.get_data(timeout=5)
     if bt_response == "timeout":
         lock.release()
         return {'status': 'error', 'message': 'timeout'}
@@ -130,7 +132,7 @@ def change_passorwd():
 
 
 @app.get('/set-angle')
-def set_angle():
+async def set_angle():
     args = flask.request.args
     password = args.get('password')
 
@@ -147,13 +149,14 @@ def set_angle():
     if not angle.isdigit():
         return {'status': 'error', 'message': 'angle should be a number'}
 
-    lock.acquire()
+    # lock.acquire()
     shared.clear_queue()
     result = ble.write_command(f'pswd={password} set-angle {angle}')
     if not result:
         return {"status": "error", "message": "failed to send command"}
 
-    bt_response = shared.get_data(timeout=5)
+    bt_response = await shared.get_data(timeout=5)
+    print(bt_response)
     if bt_response == "timeout":
         lock.release()
         return {'status': 'error', 'message': 'timeout'}

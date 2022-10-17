@@ -30,7 +30,6 @@ async def keep_connected():
             try:
                 await asyncio.wait_for(client.connect(), timeout=5)
                 print("device reconnected")
-                await client.start_notify(NOTIFY_CHAR, onreceive)
             except asyncio.TimeoutError:
                 print("device reconnect failed")
 
@@ -46,6 +45,7 @@ async def main():
             print("[ble] init: connecting to device...")
             await client.__aenter__()
             print("[ble] init: connected")
+            await client.start_notify(NOTIFY_CHAR, onreceive)
             break
         except:
             print("[ble] init: connection failed")
