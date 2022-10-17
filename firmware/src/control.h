@@ -11,9 +11,9 @@ const int servoPin = 6;
 Servo myServo;
 
 int minAngle = 0;
-int maxAngle = 120;
+int maxAngle = 115;
 int curAngle = minAngle;
-int defaultDelay = 30;
+int defaultDelay = 20;
 
 void initServo() {
     playMelody(START_INIT);
@@ -56,9 +56,9 @@ void setAngle(int tarAngle, int servoDelay = defaultDelay,
     if (deattachOrNot) myServo.detach();
 }
 
-void openLock() { setAngle(maxAngle, defaultDelay, true); }
+void openLock() { setAngle(maxAngle, defaultDelay, false); }
 
-void closeLock() { setAngle(minAngle, defaultDelay, true); }
+void closeLock() { setAngle(minAngle, (int)defaultDelay / 2, true); }
 
 void openAndClose() {
     printLog("OpenAndClose");
