@@ -30,7 +30,7 @@ async def keep_connected():
             try:
                 await asyncio.wait_for(client.connect(), timeout=5)
                 print("device reconnected")
-            except asyncio.TimeoutError:
+            except:
                 print("device reconnect failed")
 
         await asyncio.sleep(1)
