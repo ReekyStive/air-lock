@@ -1,51 +1,43 @@
+#ifndef __PASSWORD_H__
+#define __PASSWORD_H__
+
+#include <Arduino.h>
 #include <EEPROM.h>
 
-int passwdLen = 6;
-byte passwd[6] =
-{
-    1, 2, 3, 4, 5, 6
-};
+const int passwdLen = 6;
+String passwdFromRom = "xxxxxx";
 
-byte receivedPasswd[6] =
-{
-    -1, -1, -1, -1, -1, -1
-};
-
-void getPasswd()
-{
-    for (int i = 0; i < passwdLen; i++)
-    {
-        passwd[i] = EEPROM.read(i);
+void readPasswdFromRom() {
+    for (int i = 0; i < passwdLen; i++) {
+        passwdFromRom[i] = (char)EEPROM.read(i) + '0';
     }
 }
 
-void setPasswd()
-{
-    for (int i = 0; i < passwdLen; i++)
-    {
-        EEPROM.write(i, passwd[i]);
+void setPasswd(String passwd) {
+    if (passwd.length() != 6) {
+        Serial.println("Invalid Password Length");
+        return;
     }
+    for (int i = 0; i < passwdLen; i++) {
+        EEPROM.write(i, (byte)(passwd[i] - '0'));
+    }
+    passwdFromRom = passwd;
 }
 
-void resetPasswd()
-{
-    passwd[0] = 1;
-    passwd[1] = 2;
-    passwd[2] = 3;
-    passwd[3] = 4;
-    passwd[4] = 5;
-    passwd[5] = 6;
-    setPasswd();
-}
+void resetPasswd() { setPasswd(String("123456")); }
 
-int checkPasswd()
-{
-    for (int i = 0; i < passwdLen; i++)
-    {
-        if (passwd[i] != receivedPasswd[i])
-        {
-            return 0;
+int validatePasswd(String received) {
+    if (received.length() != passwdLen) {
+        Serial.println("Invalid Password Length");
+        return false;
+    }
+
+    for (int i = 0; i < passwdLen; i++) {
+        if (received[i] != passwdFromRom[i]) {
+            return false;
         }
     }
-    return 1;
+    return true;
 }
+
+#endif
