@@ -1,10 +1,12 @@
 import flask
 import asyncio
 import ble
+import threading
+import shared
 
 
+lock = threading.Semaphore()
 ble.BleThread().start()
-
 app = flask.Flask(__name__)
 
 
@@ -26,28 +28,40 @@ def status():
 
 
 @app.get('/open')
-def open():
+async def open():
     args = flask.request.args
     password = args.get('password')
 
     if password == None:
-        return {"status": "error", "message": "password required"}, 400
+        return {"status": "error", "message": "password required"}
     if len(password) != 6 or not password.isdigit():
         return {'status': 'error', 'message': 'password should be 6 digits of number'}
 
+    lock.acquire()
+    shared.clear_queue()
     result = ble.write_command(f"pswd={password} open")
     if not result:
-        return {"status": "failed"}
-    return {"status": "success"}
+        return {"status": "error", "message": "failed to send command"}
+
+    bt_response = await shared.get_data(timeout=5)
+    if bt_response == "timeout":
+        lock.release()
+        return {"status": "error", "message": "timeout"}
+    if bt_response == "wrong-password":
+        lock.release()
+        return {"status": "error", "message": "wrong password"}
+    if bt_response == "ok":
+        lock.release()
+        return {"status": "success"}
 
 
 @app.get('/play-melody')
-def play_melody():
+async def play_melody():
     args = flask.request.args
     password = args.get('password')
 
     if password == None:
-        return {"status": "error", "message": "password required"}, 400
+        return {"status": "error", "message": "password required"}
     if len(password) != 6 or not password.isdigit():
         return {'status': 'error', 'message': 'password should be 6 digits of number'}
 
@@ -61,8 +75,22 @@ def play_melody():
     if not melodyId.isdigit():
         return {'status': 'error', 'message': 'id is not a number'}
 
-    ble.write_command(f'pswd={password} play-melody {melodyId}')
-    return {'status': 'success', 'melodyId': melodyId}
+    lock.acquire()
+    shared.clear_queue()
+    result = ble.write_command(f'pswd={password} play-melody {melodyId}')
+    if not result:
+        return {"status": "error", "message": "failed to send command"}
+
+    bt_response = await shared.get_data(timeout=5)
+    if bt_response == "timeout":
+        lock.release()
+        return {'status': 'error', 'message': 'timeout'}
+    if bt_response == "wrong-password":
+        lock.release()
+        return {'status': 'error', 'message': 'wrong password'}
+    if bt_response == "ok":
+        lock.release()
+        return {'status': 'success', 'melodyId': melodyId}
 
 
 @app.get('/change-password')
@@ -75,16 +103,30 @@ def change_passorwd():
     if len(password) != 6 or not password.isdigit():
         return {'status': 'error', 'message': 'password should be 6 digits of number'}
 
-    newPasswd = args.get('new')
+    new_passwd = args.get('new')
 
     # check if newPasswd is valid
-    if newPasswd == None:
+    if new_passwd == None:
         return {'status': 'error', 'message': 'missing new password'}
-    if len(newPasswd) != 6 or not newPasswd.isdigit():
+    if len(new_passwd) != 6 or not new_passwd.isdigit():
         return {'status': 'error', 'message': 'new password should be 6 digits of number'}
 
-    ble.write_command(f'pswd={password} change-password {newPasswd}')
-    return {'status': 'success'}
+    lock.acquire()
+    shared.clear_queue()
+    result = ble.write_command(f'pswd={password} change-password {new_passwd}')
+    if not result:
+        return {"status": "error", "message": "failed to send command"}
+
+    bt_response = shared.get_data(timeout=5)
+    if bt_response == "timeout":
+        lock.release()
+        return {'status': 'error', 'message': 'timeout'}
+    if bt_response == "wrong-password":
+        lock.release()
+        return {'status': 'error', 'message': 'wrong password'}
+    if bt_response == "ok":
+        lock.release()
+        return {'status': 'success'}
 
 
 @app.get('/set-angle')
@@ -105,8 +147,22 @@ def set_angle():
     if not angle.isdigit():
         return {'status': 'error', 'message': 'angle should be a number'}
 
-    ble.write_command(f'pswd={password} set-angle {angle}')
-    return {'status': 'success', 'angle': angle}
+    lock.acquire()
+    shared.clear_queue()
+    result = ble.write_command(f'pswd={password} set-angle {angle}')
+    if not result:
+        return {"status": "error", "message": "failed to send command"}
+
+    bt_response = shared.get_data(timeout=5)
+    if bt_response == "timeout":
+        lock.release()
+        return {'status': 'error', 'message': 'timeout'}
+    if bt_response == "wrong-password":
+        lock.release()
+        return {'status': 'error', 'message': 'wrong password'}
+    if bt_response == "ok":
+        lock.release()
+        return {'status': 'success', "angle": angle}
 
 
 # run

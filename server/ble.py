@@ -1,6 +1,7 @@
 import asyncio
 import bleak
 import threading
+import shared
 
 
 ADDR = "637E29E4-F3F5-9B48-4135-46A48723DD5A"
@@ -29,6 +30,7 @@ async def keep_connected():
             try:
                 await asyncio.wait_for(client.connect(), timeout=5)
                 print("device reconnected")
+                await client.start_notify(NOTIFY_CHAR, onreceive)
             except asyncio.TimeoutError:
                 print("device reconnect failed")
 
@@ -71,8 +73,11 @@ def write_command(command: str) -> bool:
         return False
 
 
-def onreceive(data):
-    print("[ble] [receive] " + str(data))
+def onreceive(_id, data: bytearray):
+    # decode data
+    received = data.decode("utf-8").strip()
+    print("[ble] received data: " + received)
+    shared.put_data(received)
 
 
 if __name__ == "__main__":

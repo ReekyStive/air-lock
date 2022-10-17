@@ -1,14 +1,6 @@
 #ifndef __COMMAND_H__
 #define __COMMAND_H__
 
-#include <Arduino.h>
-
-#include "communication.h"
-#include "control.h"
-#include "melodies.h"
-#include "password.h"
-#include "utils.h"
-
 /*
 Note: Messages are end with LF (\n).
 Commands:
@@ -28,6 +20,14 @@ pswd=<password> change-password <original> <new>
 pswd=<password> debug <on|off>
         Turn on/off debug mode.
 */
+
+#include <Arduino.h>
+
+#include "communication.h"
+#include "control.h"
+#include "melodies.h"
+#include "password.h"
+#include "utils.h"
 
 void execCommand(String command) {
     if (command == " admin-reset 114514 1919810 !!! +.*?? ") {
@@ -64,25 +64,21 @@ void execCommand(String command) {
     if (operation == "open") {
         btSerial.println("ok");
         openAndClose();
-        btSerial.println("done");
 
     } else if (operation == "set-angle") {
         btSerial.println("ok");
         int angle = params.toInt();
         setAngle(angle, defaultDelay, true);
-        btSerial.println("done");
 
     } else if (operation == "play-melody") {
         btSerial.println("ok");
         int melodyId = params.toInt();
         playMelody((MelodyVariants)melodyId);
-        btSerial.println("done");
 
     } else if (operation == "change-password") {
         btSerial.println("ok");
         String newPasswd = params;
         setPasswd(newPasswd);
-        btSerial.println("done");
         printLog("Password Changed");
 
     } else if (operation == "debug") {
@@ -90,14 +86,8 @@ void execCommand(String command) {
         String param = params;
         if (param == "on") {
             enableDebugging();
-            btSerial.println("done");
-
         } else if (param == "off") {
             disableDebugging();
-            btSerial.println("done");
-
-        } else {
-            btSerial.println("invalid-params");
         }
 
     } else {

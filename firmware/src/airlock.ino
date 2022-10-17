@@ -45,7 +45,6 @@ void loop() {
     }
 
     bool newTouchPressed = digitalRead(touchPin);
-    newTouchPressed = false;
     if (newTouchPressed != touchPressed) {
         touchPressed = newTouchPressed;
         if (touchPressed) {
