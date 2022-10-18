@@ -14,8 +14,6 @@ CORS(app)
 
 @app.get('/ping')
 def ping():
-    loop = asyncio.get_event_loop()
-    print(loop)
     return 'pong'
 
 
@@ -169,4 +167,4 @@ async def set_angle():
 
 
 # run
-app.run(host='0.0.0.0', port=5001)
+app.run(host='127.0.0.1', port=5001)
